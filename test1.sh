@@ -47,44 +47,60 @@ DEEP=1
 
 # Search and list href hyperlinks
 
-curl -sSL  $URL | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | grep '/' | sort > $LINKFILE.$DEEP.$EXT_TXT;
+curl -sSL  $URL | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$EXT_TXT;
 
 N=2
 while [[ $N -le $DEPTH ]]
 	do
 		for line in $(cat $LINKFILE.$DEEP.$EXT_TXT)
-		do curl -sSL  $URL | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | grep '/' | sort > $LINKFILE.$N.$EXT_TXT;
+		do
+			if [[ "$line" =~ ^"/"  ]]
+			then
+			curl -sSL  $URL$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |  cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
+			elif [[ "$line" == "$URL*" ]]
+				then
+			 	curl -sSL  $line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
+			elif [[ "$line" == ^"[a-z]" ]]
+			then
+			curl -sSL  $URL/$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |  cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
+			fi
 		done
 		DEEP="$N"
 	(( N++ ))
 done
+#cat $LINKFILE.$EXT_TXT |uniq > $LINKFILE.$EXT_TXT
 
 # Create imagenes directory if it doesn't exist
-
+cp $IMGFILE.$EXT_TXT $SAVE_PATH
+cp $LINKFILE.$EXT_TXT $SAVE_PATH
 cd "$SAVE_PATH"
 
 # find img sources recursiverly and create a list in a file
 
-curl -sSL  $URL | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 |cut -d "?" -f1 > $IMGFILE;
+for line in $(cat $LINKFILE.$EXT_TXT)
+	do
+		curl -sSL  $line | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 | cut -d "'" -f2 |cut -d "?" -f1 |grep -v '^$'| sort |uniq >> $IMGFILE.$EXT_TXT;	
+	done
 
 # copy img list file to parent dir
 
-cp $IMGFILE $SRC_PATH
+cp $IMGFILE.$EXT_TXT $SRC_PATH
 
 # Iterate each line in the file and download the file
 
-for line in $(cat $IMGFILE)
+for line in $(cat $IMGFILE.$EXT_TXT)
 	do 
-	#	if [[ "$line" != "$URL*" ]];
-	#	then
-			curl -v -O $URL$line
-	#	else
-	#		curl -O $line
-	#	fi
-done
+		if [[ "$line" =~ ^"/" ]];
+		then
+			curl -O "$URL$line"
+		else
+			curl -O $line
+		fi
+
+	done
 
 # removing img list file
-rm $IMGFILE
+rm $IMGFILE.$EXT_TXT
 
 cd $SRC_PATH
 
