@@ -47,7 +47,7 @@ DEEP=1
 
 # Search and list href hyperlinks
 
-curl -sSL  $URL | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$EXT_TXT;
+curl -sSL  $URL | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
 
 N=2
 while [[ $N -le $DEPTH ]]
@@ -59,11 +59,12 @@ while [[ $N -le $DEPTH ]]
 			curl -sSL  $URL$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |  cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
 			elif [[ "$line" == "$URL*" ]]
 				then
-			 	curl -sSL  $line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
-			elif [[ "$line" == ^"[a-z]" ]]
+			 	curl -sSL  $line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
+			elif [[ "$line" == ^"[a-zA-Z0-9]" ]]
 			then
 			curl -sSL  $URL/$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |  cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
 			fi
+			cat $LINKFILE.$DEEP.$EXT_TXT |uniq >> $LINKFILE.$EXT_TXT
 		done
 		DEEP="$N"
 	(( N++ ))
@@ -71,20 +72,25 @@ done
 #cat $LINKFILE.$EXT_TXT |uniq > $LINKFILE.$EXT_TXT
 
 # Create imagenes directory if it doesn't exist
-cp $IMGFILE.$EXT_TXT $SAVE_PATH
 cp $LINKFILE.$EXT_TXT $SAVE_PATH
 cd "$SAVE_PATH"
 
 # find img sources recursiverly and create a list in a file
-
-for line in $(cat $LINKFILE.$EXT_TXT)
+N=1
+while [[ $N -le $DEPTH ]]
 	do
-		curl -sSL  $line | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 | cut -d "'" -f2 |cut -d "?" -f1 |grep -v '^$'| sort |uniq >> $IMGFILE.$EXT_TXT;	
+		for line in $(cat $LINKFILE.$EXT_TXT)
+		do
+			curl -sSL  $line | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 | cut -d "'" -f2 |cut -d "?" -f1 | sort |uniq >> $IMGFILE.$EXT_TXT;
 	done
+	DEEP="$N"
+	(( N++ ))
+done
 
 # copy img list file to parent dir
 
-cp $IMGFILE.$EXT_TXT $SRC_PATH
+#cp $IMGFILE.$EXT_TXT $SRC_PATH
+#cd $SRC_PATH
 
 # Iterate each line in the file and download the file
 
