@@ -2,6 +2,7 @@
 
 # Get console options
 SAVE_PATH="./data"
+LINKS_PATH="./links"
 while getopts "r:l:p:" FLAG
 do
 	case "${FLAG}" in
@@ -38,6 +39,7 @@ done
 	set +x
 
 [ ! -d "$SAVE_PATH" ] && mkdir -p "$SAVE_PATH"
+[ ! -d "$LINKS_PATH" ] && mkdir -p ""$LINKS_PATH
 
 IMGFILE="img"
 LINKFILE="href"
@@ -47,24 +49,24 @@ DEEP=1
 
 # Search and list href hyperlinks
 
-curl -sSL  $URL | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
+curl -sSL  $URL | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | grep '/' | sort |uniq >> "links/$LINKFILE.$DEEP.$EXT_TXT";
 
 N=2
 while [[ $N -le $DEPTH ]]
 	do
-		for line in $(cat $LINKFILE.$DEEP.$EXT_TXT)
+		for line in $(cat "$LINKS_PATH/$LINKFILE.$DEEP.$EXT_TXT")
 		do
-			if [[ "$line" =~ ^"/"  ]]
+			if [[ "$line" =~ ^"/.*"  ]]
 			then
-			curl -sSL  $URL$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |  cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
+			curl -sSL  $URL$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |  cut -d '"' -f2 | grep '/' | sort |uniq >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
 			elif [[ "$line" == "$URL*" ]]
 				then
-			 	curl -sSL  $line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
+			 	curl -sSL  $line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 | sort |uniq >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
 			elif [[ "$line" == ^"[a-zA-Z0-9]" ]]
 			then
-			curl -sSL  $URL/$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |  cut -d '"' -f2 | grep '/' | sort |uniq >> $LINKFILE.$DEEP.$EXT_TXT;
+			curl -sSL  $URL/$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |  cut -d '"' -f2 | grep '/' | sort |uniq >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
 			fi
-			cat $LINKFILE.$DEEP.$EXT_TXT |uniq >> $LINKFILE.$EXT_TXT
+			cat "$LINKS_PATH/$LINKFILE.$DEEP.$EXT_TXT" |uniq >> "$LINKS_PATH/$LINKFILE.$EXT_TXT"
 		done
 		DEEP="$N"
 	(( N++ ))
@@ -72,29 +74,24 @@ done
 #cat $LINKFILE.$EXT_TXT |uniq > $LINKFILE.$EXT_TXT
 
 # Create imagenes directory if it doesn't exist
-cp $LINKFILE.$EXT_TXT $SAVE_PATH
+cp "$LINKS_PATH/$LINKFILE.$EXT_TXT" $SAVE_PATH
 cd "$SAVE_PATH"
 
 # find img sources recursiverly and create a list in a file
-N=1
-while [[ $N -le $DEPTH ]]
-	do
-		for line in $(cat $LINKFILE.$EXT_TXT)
+		for line in $(cat "../$LINKS_PATH/$LINKFILE.$EXT_TXT")
 		do
 			curl -sSL  $line | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 | cut -d "'" -f2 |cut -d "?" -f1 | sort |uniq >> $IMGFILE.$EXT_TXT;
 	done
-	DEEP="$N"
-	(( N++ ))
-done
-
 # copy img list file to parent dir
 
 #cp $IMGFILE.$EXT_TXT $SRC_PATH
 #cd $SRC_PATH
 
 # Iterate each line in the file and download the file
+cat "$IMGFILE.$EXT_TXT" |uniq > temp.txt
+mv temp.txt "$IMGFILE.$EXT_TXT"
 
-for line in $(cat $IMGFILE.$EXT_TXT)
+for line in $(cat "$IMGFILE.$EXT_TXT")
 	do 
 		if [[ "$line" =~ ^"/" ]];
 		then
