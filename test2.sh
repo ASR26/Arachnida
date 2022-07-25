@@ -63,7 +63,7 @@ while [[ $N -le $DEPTH ]]
 			elif [[ "$line" == "$URL*" ]]
 				then
 			 	curl -sSL  $line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 |cut -d "&" -f1 |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
-			elif [[ "$line" == ^"[a-zA-Z0-9]*" ]]
+			elif [[ "$line" =~ ^"[a-zA-Z0-9]*" ]]
 			then
 			curl -sSL  $URL/$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |  cut -d '"' -f2 |cut -d "&" -f1 |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
 			else
@@ -95,24 +95,22 @@ cd "$SAVE_PATH"
 cat "$IMGFILE.$EXT_TXT" |sort -u > temp.txt
 mv temp.txt "$IMGFILE.$EXT_TXT"
 
-for line in $(cat "$IMGFILE.$EXT_TXT")
-	do 
-		if [[ "$line" != "http"* ]] && [[ "$line" != "/"*  ]];
-		then
-			curl -O "$URL/$line"
-		fi
-#		if [[ "$line" =~ ^"/".* ]];
-#		then
-#			curl -O "$URL$line"
-#		elif [[ "$line" =~ ^"http".* ]];
-#			then 
-#			curl -O "$line"
-#		elif [[ "$line" =~ ^"[a-z]" || ^"[A-Z]" || ^"[0-9]" ]];
-#		then
-#			curl -O "$URL/$line"
-#		fi
-	done
-
+for line in $(cat $IMGFILE.$EXT_TXT)
+do
+    if [[ "$line" == http* ]]
+        then
+        curl -OL $line;
+	elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL != https://* ]]
+       then
+		  curl -OL "https://"$URL//$line
+	  elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL == https://* ]]
+	  then
+		  curl -OL $URL//$line
+    elif [[ $line ==  /* ]]
+        then
+        curl -OL $URL$line;
+    fi
+done
 # removing img list file
 #rm $IMGFILE.$EXT_TXT
 
