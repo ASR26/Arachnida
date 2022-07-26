@@ -69,16 +69,17 @@ while [[ $N -le $DEPTH ]]
 				continue
 			elif [[ "$line" == http*  ]]
 			then
-				curl -sL  $line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |awk -F '"' '{print $2}' |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
+				curl -sSL  $line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |awk -F '"' '{print $2}' |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
 			elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL != https://* ]]
 			then
-			 	curl -sL  "https://"$URL//$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |cut -d '"' -f2 |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
+			 	curl -sSL  "https://"$URL//$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |cut -d '"' -f2 |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
 			elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL == https://* ]]
 			then
-				curl -sL  $URL//$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |cut -d '"' -f2 |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
+curl -sL  $URL//$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |cut -d '"' -f2 |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
 			elif [[ $line == ^/* ]]
 			then
-				curl -sL  $URL$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |cut -d '"' -f2 |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
+				line1=$line |cut -d* -f2
+				curl -sSL  "https://"$URL$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |cut -d '"' -f2 |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
 			fi
 			cat "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT" |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$EXT_TXT"
 		done
@@ -99,7 +100,7 @@ echo "Images found"
 # find img sources recursiverly and create a list in a file
 		for line in $(cat "$LINKFILE.$EXT_TXT")
 		do
-			curl -sL  $line | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 | cut -d "'" -f2 |cut -d "?" -f1 |cut -d "&" -f1 |sort -u >> $IMGFILE.$EXT_TXT;
+			curl -sSL  $URL$line | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 | cut -d "'" -f2 |cut -d "?" -f1 |cut -d "&" -f1 |sort -u >> $IMGFILE.$EXT_TXT;
 	done
 # copy img list file to parent dir
 
@@ -118,12 +119,15 @@ do
         curl -OL $line;
 	elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL != https://* ]]
        then
+		echo "letras"
 		  curl -OL "https://"$URL//$line
 	  elif 	[[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL == https://* ]]
   then
+	  echo "con http"
 		  curl -OL $URL//$line
     elif [[ $line ==  /* ]]
         then
+		echo "con barra"
         curl -OL $URL$line;
     fi
 done
