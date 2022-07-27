@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Get console options
+# Cogemos las opciones de consola con getopts
 SAVE_PATH="data"
 LINKS_PATH="links"
 DEPTH=5
@@ -9,29 +9,13 @@ do
 	case "${FLAG}" in
 	r)
 		URL="${OPTARG}"
-#		if [[ $URL != https* ]]
-#		then
-#			echo "Escribe la URL con el formato: https://dominio.com"
-#			exit 1
-#		fi
 		echo "la url es: $URL"
 		;;
 	l)
 		DEPTH="${OPTARG}"
-		if [ -z "${OPTARG}" ] ; then
-			DEPTH=5
-		else
-			DEPTH="${OPTARG}"
-		fi
 		;;
 	p)
-		if [ -z "${OPTARG}" ]; then
-				SAVE_PATH="./data"
-				echo "El path es: ./data"
-		else
-				SAVE_PATH="${OPTARG}"
-				echo "El path es: ./$SAVE_PATH"
-		fi
+		SAVE_PATH="${OPTARG}"
 		;;
 	*)
 		echo "Opción inválida"
@@ -42,9 +26,11 @@ done
 	shift $(($OPTIND - 1))
 	set +x
 
+# Si no existen las carpetas de descarga y de linjs las creamos
 [ ! -d "$SAVE_PATH" ] && mkdir -p "$SAVE_PATH"
 [ ! -d "$LINKS_PATH" ] && mkdir -p "$LINKS_PATH"
 
+echo "La ruta de descarga es: $SAVE_PATH"
 echo "El nivel de recursividad es: $DEPTH"
 IMGFILE="img"
 LINKFILE="href"
@@ -52,12 +38,12 @@ EXT_TXT="txt"
 SRC_PATH=$(pwd)
 DEEP=1
 
-# Search and list href hyperlinks
-
-#curl -sSL  $URL | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' | cut -d '"' -f2 |cut -d "&" -f1 | grep '/' |sort -u >> "$LINKS_PATH/$LINKFILE.$DEEP.$EXT_TXT";
-
 echo $URL > "$LINKS_PATH/$LINKFILE.$DEEP.$EXT_TXT";
-echo "Searching links"
+echo "Buscando los enlaces"
+
+# Creamos un archivo href.1.txt donde metemos el enlace que se ha dado y lo escribimos en href.txt, y en caso de que haya recursividad mayor de 1 buscaremos los enlaces que haya en esta página,
+# los meteremos en href.2.txt y cuando los tengamos todos lo meteremos en el href.txt, así sucesivamente, siempre leyendo el último archivo con número
+
 cat "$LINKS_PATH/$LINKFILE.$DEEP.$EXT_TXT" > "$LINKS_PATH/$LINKFILE.$EXT_TXT"
 N=2
 while [[ $N -le $DEPTH ]]
@@ -87,18 +73,20 @@ curl -sL  $URL//$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |
 done
 cat "$LINKS_PATH/$LINKFILE.$DEEP.$EXT_TXT" |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$EXT_TXT"
 
+# Eliminamos los posibles duplicados que haya en el archivo final
+
 cat "$LINKS_PATH/$LINKFILE.$EXT_TXT" |sort -u  > "$LINKS_PATH/tmp.txt"
 mv "$LINKS_PATH/tmp.txt" "$LINKS_PATH/$LINKFILE.$EXT_TXT"
-echo "Links found"
-echo "Searching images"
-# Create imagenes directory if it doesn't exist
+echo "Enlaces encontrados"
 cp "$LINKS_PATH/$LINKFILE.$EXT_TXT" $SAVE_PATH
 cd "$SAVE_PATH"
 cat "$LINKFILE.$EXT_TXT" |sort -u > temp.txt
 mv temp.txt "$LINKFILE.$EXT_TXT"
 
 
-# find img sources recursiverly and create a list in a file
+# Buscamos las imágenes y guardamos los enlaces en un archivo, que usaremos para descargarlas
+
+echo "Buscando imágenes"
 		for line in $(cat "$LINKFILE.$EXT_TXT")
 		do
 			if [[ $line == http* || $line == $URL ]]
@@ -116,17 +104,16 @@ mv temp.txt "$LINKFILE.$EXT_TXT"
 			fi
 	done
 
-echo "Images found"
-echo "Downloading images"
-# copy img list file to parent dir
+echo "Imagenes encontradas"
 
-#cp $IMGFILE.$EXT_TXT $SRC_PATH
-#cd $SRC_PATH
-
-# Iterate each line in the file and download the file
+# Eliminamos los posibles duplicados del archivo
 
 cat "$IMGFILE.$EXT_TXT" |sort -u > temp.txt
 mv temp.txt "$IMGFILE.$EXT_TXT"
+
+echo "Descargando imágenes"
+
+# Recorremos las líneas descargando cada una de las imágenes
 
 for line in $(cat $IMGFILE.$EXT_TXT)
 do
@@ -144,9 +131,9 @@ do
         curl -OsL $URL$line;
     fi
 done
-echo "Download finished"
-# removing img list file
-#rm $IMGFILE.$EXT_TXT
-#rm $LINKFILE.$EXT_TXT
-#cd ..
-#rm -rf $LINKS_PATH
+echo "Descarga completada"
+# Borramos los archivos de enlace junto con la carpeta y el archivo de texto con las imágenes 
+rm $IMGFILE.$EXT_TXT
+rm $LINKFILE.$EXT_TXT
+cd ..
+rm -rf $LINKS_PATH

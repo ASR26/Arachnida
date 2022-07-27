@@ -1,16 +1,17 @@
+# importamos las librerías necesarias
 from PIL import Image
 from PIL.ExifTags import TAGS
 import sys
 
-# path to the image or video
+# importamos el sistema para ver los argumentos
 
 import sys
 
 imagename = sys.argv[1]
-# read the image data using PIL
+# leemos los datos de la imagen con PIL
 image = Image.open(imagename)
 
-# extract other basic metadata
+# extraemos metadatos básicos y los asignamos a un objeto JSON
 info_dict = {
     "Filename": image.filename,
     "Image Size": image.size,
@@ -22,13 +23,15 @@ info_dict = {
     "Frames in Image": getattr(image, "n_frames", 1)
 }
 
+#imprimimos la información que hemos sacado antes
+
 for label,value in info_dict.items():
     print(f"{label:25}: {value}")
     
-# extract EXIF data
+# extraemos los datos EXIF
 exifdata = image._getexif()
 
-# iterating over all EXIF data fields
+# recorremos los datos que acabamos de extraer, en caso de que no haya imprimiremos el mensaje "No EXIF data"
 if (exifdata is not None):
     for tag_id in exifdata:
      # get the tag name, instead of human unreadable tag id
@@ -40,4 +43,4 @@ if (exifdata is not None):
              data = data.decode()
          print(f"{tag:25}: {data}")
 else:
-    print("No exif data")
+    print("No EXIF data")
