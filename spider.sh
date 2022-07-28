@@ -4,6 +4,13 @@
 SAVE_PATH="data"
 LINKS_PATH="links"
 DEPTH=5
+
+#if [[ $1 ]]
+#then
+#	echo "El programa debe usarse de la siguiente forma: ./spider -r URL (-l PROFUNDIDAD DE RECURSIVIDAD) (-p NOMBRE DE CARPETA DE OUTPUT)"
+#	exit 1
+#fi
+
 while getopts "r:l:p:" FLAG
 do
 	case "${FLAG}" in
@@ -23,14 +30,14 @@ do
 		SAVE_PATH="${OPTARG}"
 		;;
 	*)
-		echo "Opción inválida"
+		echo "El programa debe usarse de la siguiente forma: ./spider -r URL (-l PROFUNDIDAD DE RECURSIVIDAD) (-p NOMBRE DE CARPETA DE OUTPUT)"
+		exit 1
 		;;
 	esac
 done
 	# Controla modificadores inexistentes
 	shift $(($OPTIND - 1))
 	set +x
-
 # Si no existen las carpetas de descarga y de linjs las creamos
 [ ! -d "$SAVE_PATH" ] && mkdir -p "$SAVE_PATH"
 [ ! -d "$LINKS_PATH" ] && mkdir -p "$LINKS_PATH"
