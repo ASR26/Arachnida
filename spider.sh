@@ -9,6 +9,11 @@ do
 	case "${FLAG}" in
 	r)
 		URL="${OPTARG}"
+		if [[ $URL != http* ]]
+		then
+			echo "La URL debe tener el formato https://dominio.extension"
+			exit 1
+		fi
 		echo "la url es: $URL"
 		;;
 	l)
@@ -56,9 +61,9 @@ while [[ $N -le $DEPTH ]]
 			elif [[ "$line" == http*  ]]
 			then
 				curl -sSL  $line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |awk -F '"' '{print $2}' |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
-			elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL != https://* ]]
-			then
-			 	curl -sSL  "https://"$URL//$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |cut -d '"' -f2 |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
+#			elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL != https://* ]]
+#			then
+#			 	curl -sSL  "https://"$URL//$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |cut -d '"' -f2 |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
 			elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL == https://* ]]
 			then
 curl -sL  $URL//$line | awk -F '<a' '{print $2}' | awk -F 'href=' '{print $2}' |cut -d '"' -f2 |cut -d "?" -f1 |cut -d "&" -f1 |grep "/" |sort -u >> "$LINKS_PATH/$LINKFILE.$N.$EXT_TXT";
@@ -92,9 +97,9 @@ echo "Buscando imágenes"
 			if [[ $line == http* || $line == $URL ]]
 			then
 				curl -sSL  $line | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 | cut -d "'" -f2 |cut -d "?" -f1 |cut -d "&" -f1 |sort -u >> $IMGFILE.$EXT_TXT;
-			elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL != https://* ]]
-			then
-				curl -sSL "https://"$URL$line | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 | cut -d "'" -f2 |cut -d "?" -f1 |cut -d "&" -f1 |sort -u >> $IMGFILE.$EXT_TXT;
+#			elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL != https://* ]]
+#			then
+#				curl -sSL "https://"$URL$line | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 | cut -d "'" -f2 |cut -d "?" -f1 |cut -d "&" -f1 |sort -u >> $IMGFILE.$EXT_TXT;
 			elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL == https://* ]]
 			then
 				curl -sSL $URL//$line | grep ".jpg\|.jpeg\|.png\|.gif\|.bmp" | awk -F '<img' '{print $2}' | awk -F 'src=' '{print $2}' |cut -d '"' -f2 | cut -d "'" -f2 |cut -d "?" -f1 |cut -d "&" -f1 |sort -u >> $IMGFILE.$EXT_TXT;
@@ -122,7 +127,7 @@ do
         curl -OsL $line;
 	elif [[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL != https://* && $line != $URL ]]
        then
-		  curl -OL "https://"$URL//$line
+		  curl -OsL "https://"$URL//$line
 	  elif 	[[ ( $line == [a-z]* || $line == [A-Z]* || $line == [0-9]* ) && $URL == https://* ]]
   then
 		  curl -OsL $URL//$line
